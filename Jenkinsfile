@@ -1,20 +1,43 @@
 pipeline {
     agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        IMAGE_NAME = 'rishitha-ballem/jenkins-demo-app'
+    }
+
     stages {
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                echo 'Building the project...'
+                git 'https://github.com/Rishitha-Ballem/jenkins-demo.git'
             }
         }
-        stage('Test') {
+
+        stage('Build Docker Image') {
             steps {
-                echo 'Running tests...'
+                script {
+                    sh 'docker build -t $IMAGE_NAME .'
+                }
             }
         }
-        stage('Deploy') {
+
+        stage('Push to DockerHub') {
             steps {
-                echo 'Deploying the application...'
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub',
+                        usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                        
+                        sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
+                        sh 'docker push $IMAGE_NAME'
+                    }
+                }
             }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout'
         }
     }
 }
