@@ -2,34 +2,37 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        IMAGE_NAME = 'rishitha-ballem/jenkins-demo-app'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')  // your Jenkins credential ID
+        DOCKER_IMAGE = "rishithaballem/text-to-image"     // your Docker Hub repo name
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/Rishitha-Ballem/jenkins-demo.git'
+                checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t $IMAGE_NAME .'
+                    bat "docker build -t %DOCKER_IMAGE% ."
                 }
             }
         }
 
-        stage('Push to DockerHub') {
+        stage('Login to DockerHub') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub',
-                        usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                        
-                        sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
-                        sh 'docker push $IMAGE_NAME'
-                    }
+                    bat "echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin"
+                }
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                script {
+                    bat "docker push %DOCKER_IMAGE%"
                 }
             }
         }
@@ -37,7 +40,7 @@ pipeline {
 
     post {
         always {
-            sh 'docker logout'
+            echo 'Pipeline completed — cleaning up!'
         }
     }
 }
