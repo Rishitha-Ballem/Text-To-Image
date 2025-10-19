@@ -1,4 +1,5 @@
-FROM openjdk:17
-COPY target/demo.jar /app/demo.jar
+FROM python:3.9
 WORKDIR /app
-CMD ["java", "-jar", "demo.jar"]
+COPY . .
+RUN pip install -r requirements.txt
+CMD ["python", "main.py"]
