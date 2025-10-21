@@ -1,15 +1,5 @@
-
-# Use Python base image
 FROM python:3.11-slim
-
-# Set working directory
 WORKDIR /app
-
-# Copy project files
-COPY . /app
-
-# Install dependencies
+COPY app/ /app
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Command to run application
-CMD ["python", "app/main.py"]
+CMD ["python", "main.py"]
