@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')  // your Jenkins credential ID
-        DOCKER_IMAGE = "rishithaballem/text-to-image"     // your Docker Hub repo name
+        IMAGE_NAME = "text2image"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 checkout scm
             }
@@ -15,32 +15,30 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    bat "docker build -t %DOCKER_IMAGE% ."
-                }
+                bat "docker build -t %IMAGE_NAME%:%IMAGE_TAG% ."
             }
         }
 
-        stage('Login to DockerHub') {
+        stage('Run Docker Container') {
             steps {
-                script {
-                    bat "echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin"
-                }
+                bat "docker run --rm %IMAGE_NAME%:%IMAGE_TAG%"
             }
         }
 
-        stage('Push Image') {
+        stage('Clean Up') {
             steps {
-                script {
-                    bat "docker push %DOCKER_IMAGE%"
-                }
+                bat "docker container prune -f"
+                bat "docker image prune -f"
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline completed — cleaning up!'
+        success {
+            echo "✅ Pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
         }
     }
 }
